@@ -1,0 +1,5 @@
+[monitorserver]
+prom  ansible_host=188.95.226.10   ansible_user=ubuntu  ansible_ssh_private_key_file=~/.ssh/id_rsa
+[nodeservers]
+devA  ansible_host=10.0.1.5  ansible_user=ubuntu  ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_ssh_common_args='-o ProxyJump=ubuntu@188.95.226.10'
+devB  ansible_host=10.0.1.4  ansible_user=ubuntu  ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_ssh_common_args='-o ProxyJump=ubuntu@188.95.226.10'
