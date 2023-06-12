@@ -1,0 +1,14 @@
+[HAproxy]
+HAproxy1
+HAproxy2
+
+[monitorserver]
+prom
+
+[nodeservers]
+devA
+devB
+devC
+
+[all:vars]
+ansible_user=ubuntu

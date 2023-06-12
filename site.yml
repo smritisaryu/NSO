@@ -1,11 +1,36 @@
+---
+- name: gather facts
+  hosts: all
+  gather_facts: yes
+
+- name: install keepalive
+  hosts: HAproxy
+  become: yes
+  roles:
+     - keepalive
+
+- name: snmpd haproxy
+  hosts: HAproxy
+  become: yes
+  roles:
+     - haproxy
+     #- webservers
+
+- name: snmpd nodes
+  hosts: webservers
+  become: yes
+  roles:
+     - webservers
+
 - name: install monitoring stack
   hosts: monitorserver
   become: yes
   roles:
-     - ~/inv/roles/prometheus
-     - ~/inv/roles/grafana
+     - prometheus
+     - grafana
+
 - name: install node-exporter
-  hosts: nodeservers
+  hosts: webservers
   become: yes
   roles:
-     - ~/inv/roles/nodes-exporter
+     - nodes-exporter

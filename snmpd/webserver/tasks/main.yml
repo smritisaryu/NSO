@@ -1,0 +1,35 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    update_cache: yes
+    state: latest
+
+- name: Copy nginxlb.conf
+  template:
+    src: nginxlb.conf
+    dest: /etc/nginx/nginx.conf
+  notify: Restart Nginx
+
+- name: Copy nginxport.conf
+  template:
+    src: nginxport.conf
+    dest: /etc/nginx/sites-available/default
+  notify: Restart Nginx
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted
+
+- name: Copy snmpd.conf
+  template:
+    src: snmpd.conf
+    dest: /etc/snmp/snmpd.conf
+  notify: Restart SNMP
+
+- name: Restart SNMP
+  service:
+    name: snmpd
+    state: restarted
+

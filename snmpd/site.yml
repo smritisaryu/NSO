@@ -1,0 +1,12 @@
+---
+- name: Install Webserver
+  hosts: nodeservers
+  become: yes
+  roles:
+    - webserver
+
+- name: Configure HAProxy
+  hosts: haproxy
+  become: yes
+  roles:
+    - haproxy
