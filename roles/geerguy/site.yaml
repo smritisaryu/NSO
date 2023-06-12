@@ -1,0 +1,15 @@
+---
+- name: Configure HAProxy with VIP
+  hosts: haproxy
+  become: yes
+
+  vars:
+    haproxy_keepalived_virtual_router_id: 51
+    haproxy_keepalived_interface: eth0
+    haproxy_keepalived_state: MASTER
+    haproxy_keepalived_priority: 200
+    haproxy_keepalived_virtual_ipaddresses:
+      - 192.168.1.100
+
+  roles:
+    - geerlingguy.haproxy

@@ -1,0 +1,13 @@
+vrrp_instance VI_1
+{
+  state BACKUP # Set to BACKUP for the second server
+  interface eth0 # Replace with the network interface to be used
+  virtual_router_id 51
+  priority 90 # Set a lower priority for the second server compared to the primary server
+  advert_int 1
+
+ virtual_ipaddress
+ {
+        {{ vip_addr }}/24 
+ }
+}
