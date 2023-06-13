@@ -1,0 +1,86 @@
+---
+- name: install keepalived
+  hosts: HAproxy
+  roles:
+      - install
+ # hosts: HAproxy
+ # gather_facts: yes
+ # become: yes
+ # shell: sudo apt install keepalived
+ # apt:
+ #   - name: keepalived
+  #    state: present
+  #update_cache: true
+
+- name: Master proxy server
+  hosts: HAproxy1
+  become: yes
+  vars:
+    vip_addr: "{{ lookup('file', './vip') }}"
+  tasks:
+    - name: copy keepalive configuration file
+      become: yes
+      template:
+        src: master.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+#- name: install keepalived
+ # hosts: HAproxy
+#  gather_facts: yes
+#  become: yes
+#  shell: sudo apt install keepalived
+ # apt:
+  #  - name: keepalived
+   #   state: present
+ # update_cache: true 
+
+- name: Backup proxy server
+  hosts: HAproxy2
+  become: yes
+  vars:
+    vip_addr: "{{ lookup('file', './vip') }}"
+  tasks:
+    - name: copy keepalive configuration file
+      become: yes
+      template:
+        src: backup.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+- name: restart keepalived
+  hosts: HAproxy
+  roles:
+      - restart 
+#  service:
+#    name: keepalived
+#    state: restarted
+
+- name: snmpd & haproxy
+  hosts: HAproxy
+  become: yes
+  roles:
+    - haproxy
+
+- name: snmpd nodes
+  hosts: webservers
+  become: yes
+  roles:
+    - webservers
+
+- name: install monitoring stack
+  hosts: monitorserver
+  become: yes
+  roles:
+    - prometheus
+    - grafana
+
+- name: install node-exporter
+  hosts: webservers
+  become: yes
+  roles:
+    - nodes-exporter
