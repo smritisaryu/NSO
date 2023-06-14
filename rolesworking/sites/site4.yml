@@ -1,0 +1,92 @@
+---
+- name: Configure HAproxy
+  hosts: HAproxy
+  become: yes
+  tasks:
+    - name: Install HAproxy
+      apt:
+        name: haproxy
+        state: present
+
+- name: Install keepalived and configure proxy servers
+  hosts: HAproxy
+  become: yes
+  #vars:
+   # vip_addr: "{{ lookup('file', './vip') }}"
+
+  tasks:
+    - name: Install keepalived
+      apt:
+        name: keepalived
+        state: present
+    - name: sudo sysctl -w net.ipv4.ip_nonlocal_bind=1
+      become: yes
+      shell: sysctl -w net.ipv4.ip_nonlocal_bind=1
+
+    - name: gather server ip addresses
+      setup:
+          filter: ansible_default_ipv4.address
+ 
+    - name: Copy keepalived configuration file - Master
+      template:
+        src: master.conf.j2
+        dest: /etc/keepalived/keepalived.conf.j2
+        owner: root
+        group: root
+        mode: '0644'
+      when: inventory_hostname == 'lb1_HAproxy1_a'
+      notify:
+        - restart keepalived
+
+    - name: Copy keepalived configuration file - Backup
+      template:
+        src: backup.conf.j2
+        dest: /etc/keepalived/keepalived.conf.j2
+        owner: root
+        group: root
+        mode: '0644'
+      when: inventory_hostname == 'lb2_HAproxy2_a'
+      notify:
+        - restart keepalived
+
+  handlers:
+    - name: restart keepalived
+      service:
+        name: keepalived
+        state: restarted
+
+- name: Configure HAproxy
+  hosts: HAproxy
+  become: yes
+  tasks:
+    - name: Install HAproxy
+      apt:
+        name: haproxy
+        state: present
+
+    # Configure HAproxy as per your requirements
+
+- name: snmpd & haproxy
+  hosts: HAproxy
+  become: yes
+  roles:
+    - haproxy
+
+- name: snmpd nodes
+  hosts: webservers
+  become: yes
+  roles:
+    - webservers
+
+- name: Install monitoring stack
+  hosts: monitorserver
+  become: yes
+  roles:
+    - prometheus
+    - grafana
+
+- name: Install node-exporter
+  hosts: webservers
+  become: yes
+  roles:
+    - nodes-exporter

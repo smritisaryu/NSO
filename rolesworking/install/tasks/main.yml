@@ -1,0 +1,11 @@
+---
+- name: Installing HAproxy
+  apt:  
+    name: haproxy
+    state: present
+    update_cache: true
+- name: install keep alive
+  become: yes
+  apt:
+    name: keepalived
+    state: present
