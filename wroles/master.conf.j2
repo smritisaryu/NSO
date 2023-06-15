@@ -1,0 +1,18 @@
+vrrp_instance VI_1
+{
+  state MASTER # Set to BACKUP for the second server
+  interface ens3 # Replace with the network interface to be used
+  virtual_router_id 51
+  priority 200 # Set a lower priority for the second server compared to the primary server
+  advert_int 1
+
+  authentication {
+        auth_type PASS
+        auth_pass passw123
+  }
+
+  virtual_ipaddress {
+        
+	{{ vip_addr }}/24 brd 10.10.0.255 dev ens3 
+  }
+}
