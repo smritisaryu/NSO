@@ -1,0 +1,51 @@
+ 
+Host Bastion_yeah
+   User ubuntu
+   HostName 188.212.108.15
+   IdentityFile ~/.ssh/id_rsa
+   UserKnownHostsFile /dev/null
+   StrictHostKeyChecking no
+   PasswordAuthentication no
+ 
+Host lb1_HAproxy1_yeah
+   User ubuntu
+   HostName 10.10.0.9
+   IdentityFile ~/.ssh/id_rsa
+   StrictHostKeyChecking no
+   PasswordAuthentication no 
+   ProxyJump Bastion_yeah
+ 
+Host lb2_HAproxy2_yeah
+   User ubuntu
+   HostName 10.10.0.6
+   IdentityFile ~/.ssh/id_rsa
+   StrictHostKeyChecking no
+   PasswordAuthentication no 
+   ProxyJump Bastion_yeah
+ 
+Host node3_yeah
+   User ubuntu
+   HostName 10.10.0.10
+   IdentityFile ~/.ssh/id_rsa
+   UserKnownHostsFile=/dev/null
+   StrictHostKeyChecking no
+   PasswordAuthentication no
+   ProxyJump Bastion_yeah
+ 
+Host node2_yeah
+   User ubuntu
+   HostName 10.10.0.8
+   IdentityFile ~/.ssh/id_rsa
+   UserKnownHostsFile=/dev/null
+   StrictHostKeyChecking no
+   PasswordAuthentication no
+   ProxyJump Bastion_yeah
+ 
+Host node1_yeah
+   User ubuntu
+   HostName 10.10.0.4
+   IdentityFile ~/.ssh/id_rsa
+   UserKnownHostsFile=/dev/null
+   StrictHostKeyChecking no
+   PasswordAuthentication no
+   ProxyJump Bastion_yeah

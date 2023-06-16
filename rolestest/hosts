@@ -1,0 +1,22 @@
+[bastion]
+Bastion_yeah
+ 
+[HAproxy]
+lb1_HAproxy1_yeah
+lb2_HAproxy2_yeah
+ 
+[webservers]
+node3_yeah
+node2_yeah
+node1_yeah
+ 
+[HAproxy1]
+lb1_HAproxy1_yeah
+ 
+[HAproxy2]
+lb2_HAproxy2_yeah
+ 
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_ssh_common_args=' -F config '

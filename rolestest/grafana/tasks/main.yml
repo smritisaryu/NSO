@@ -1,0 +1,134 @@
+---
+# tasks file for roles/grafana
+- name: Install nessesary package
+  apt: 
+      name: apt-transport-https
+      state: present
+      update_cache: yes
+
+- name: add grafana gpg key
+  shell: curl https://packages.grafana.com/gpg.key | sudo apt-key add -
+
+- name: add grafana repo 
+  apt_repository:
+    repo: deb https://packages.grafana.com/oss/deb stable main
+    state: present
+    filename: grafana
+
+- name: Install grafana
+  apt: 
+      name: grafana
+      state: present
+      update_cache: yes
+
+- name: Enable and start grafana service
+  service:
+    name: grafana-server
+    enabled: yes
+    state: started
+#- name: Install Docker.io package
+ # shell: sudo apt install docker.io -y
+
+#- name: Pull Grafana Docker image
+ # shell: sudo docker pull grafana/grafana
+
+#- name: Run Grafana container
+ # shell: sudo docker run -d -p 3000:3000 --name=grafana grafana/grafana
+#- name: Install required packages and download Grafana repository signing key
+ # become: true
+  #become_method: sudo
+  #apt:
+   # name: "{{ item }}"
+    #state: present
+  #loop:
+   # - apt-transport-https
+    #- software-properties-common
+    #- wget
+
+#- name: Download Grafana repository signing key
+ # become: true
+  #become_method: sudo
+  #command: wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+
+#- name: Add Grafana repository for stable releases
+ # become: true
+  #become_method: sudo
+  #lineinfile:
+   # dest: /etc/apt/sources.list.d/grafana.list
+    #line: "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main"
+#- name: Append repository line to grafana.list file
+ # shell: echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+  #args:
+   # executable: /bin/bash
+
+#- name: Update package lists
+ # become: true
+  #become_method: yes
+ # shell: sudo apt-get update
+ # apt:
+  #  update_cache: yes
+
+#- name: Install Grafana OSS release
+ # become: true
+  #apt:
+   # name: grafana
+    #state: latest
+
+# Uncomment the following tasks if you want to install the Grafana Enterprise release
+# - name: Install Grafana Enterprise release
+#   become: true
+#   apt:
+#     name: grafana-enterprise
+#     state: latest
+
+
+
+#- name: install gpg
+#  apt:
+#    name: gnupg,software-properties-common
+ #   state: present
+  #  update_cache: yes
+   # cache_valid_time: 3600
+#- name: add gpg hey
+ # apt_key:
+  #  url: "https://packages.grafana.com/gpg.key"
+   # validate_certs: no
+
+#- name: Clean Apt Cache
+ # become: true
+ # apt:
+  #   autoclean: yes
+
+#- name: Update Apt Sources
+ # become: true
+  #apt:
+   #   update_cache: yes
+
+#- name: add repository
+ # apt_repository:
+  #  repo: "https://apt.grafana.com stable main"             
+   # state: present
+    #validate_certs: no
+#- name: install grafana
+  #apt:
+    #name: grafana
+ #   state: latest
+   # update_cache: yes
+    #cache_valid_time: 3600
+#- name: start service grafana-server
+ # systemd:
+  #  name: grafana-server
+   # state: started
+   # enabled: yes
+#- name: wait for service up
+ # uri:
+  #  url: "http://127.0.0.1:3000"
+   # status_code: 200
+  #register: __result
+ # until: __result.status == 200
+  #retries: 120
+  #delay: 1
+#- name: change admin password for grafana gui
+ # shell : "grafana-cli admin reset-admin-password {{ grafana_admin_password }}"
+  #register: __command_admin
+  #changed_when: __command_admin.rc !=0
