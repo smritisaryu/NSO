@@ -1,5 +1,0 @@
-[HAproxy]
-HAproxy1 ansible_host=103.57.74.96   ansible_user=ubuntu  ansib>HAproxy2 ansible_host=91.123.202.122  ansible_user=ubuntu  ansi>
-
-[nodeservers]
-devA ansible_host=10.0.1.5  ansible_user=ubuntu ansible_ssh_pri>devB ansible_host=10.0.1.4  ansible_user=ubuntu ansible_ssh_pri>
