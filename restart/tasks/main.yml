@@ -1,0 +1,24 @@
+---
+- name : sudo wait     
+  become: yes  
+  shell: while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
+
+#- name:start Keepalived
+#  become: yes
+#  tasks:
+- name: Ensure Keepalived service is running
+  systemd:
+        name: keepalived
+        enabled: yes
+
+- name: Task initiating
+  pause:
+        seconds: 10
+
+- name: restart keepalived
+  shell: sudo systemctl restart keepalived.service
+        
+- name: start keepalived
+  service:
+        name: keepalived
+        state: started

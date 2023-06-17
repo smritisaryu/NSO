@@ -1,0 +1,85 @@
+- name: gather facts
+  hosts: all
+  gather_facts: yes
+
+- name: install haproxy and keepalived
+  hosts: HAproxy
+  become: yes
+  roles:
+    - installing
+    - filter
+
+- name: snmpd & haproxy
+  hosts: HAproxy
+  become: yes
+  roles:
+    - haproxy
+    - restart
+
+- name: Master proxy server
+  hosts: HAproxy1
+  gather_facts: false
+  become: yes
+  vars:
+    vip_addr: "{{ lookup('file', './vip') }}"
+    default_ipv4: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}"
+  tasks:
+    - name: copy keepalive configuration file
+      become: yes
+      template:
+        src: master.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+- name: Backup proxy server
+  hosts: HAproxy2
+  become: yes
+  vars:
+    vip_addr: "{{ lookup('file', './vip') }}"
+    default_ipv4: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}"
+  tasks:
+    - name: copy keepalive configuration file
+      become: yes
+      template:
+        src: backup.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+- name: restart keepalived
+  hosts: HAproxy
+  roles:
+    - restart
+
+- name: snmpd nodes
+  hosts: webservers
+  become: yes
+  roles:
+    - webservers
+
+- name: install node-exporter
+  hosts: webservers
+  become: yes
+  roles:
+    - nodes-exporter
+
+- name: install monitoring stack
+  hosts: bastion
+  become: yes
+  roles:
+    - prometheus
+    - grafana
+#- name: install monitoring stack
+ # hosts: bastion
+  #become: yes
+  #roles:
+   # - role: prometheus
+    #  tags:
+     #   - prometheus
+
+   # - role: grafana
+    #  tags:
+     #   - grafana
