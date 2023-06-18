@@ -1,0 +1,258 @@
+#!/bin/bash
+openrc=$1
+tag=$2
+key=$3
+sshconfig="config"
+hostsfile="hosts"
+HAproxy1="lb1_HAproxy1_$tag"
+HAproxy2="lb2_HAproxy2_$tag"
+Bastion="Bastion_$tag"
+secgrp="secgrp_$tag"
+keypair="keypair_$tag"
+network="network_$tag"
+echo "$(date) Initiating operate"
+source "$openrc"
+bastionfip=$(openstack server list --name $Bastion -c Networks -f value | grep -Po '\d+\.\d+\.\d+\.\d+' | awk 'NR==2' 2>/dev/null)
+haproxyfixed=$(openstack server show $HAproxy1 -c addresses | grep -Po '\d+\.\d+\.\d+\.\d+' | awk 'NR==1' 2>/dev/null)
+haproxyfixed2=$(openstack server list --name $HAproxy2 -c Networks -f value | grep -Po '\d+\.\d+\.\d+\.\d+' | awk 'NR==1' 2>/dev/null)
+
+echo "$(date) checking for required nodes"
+while true; do
+    echo "reading servers.conf file now.."
+    N=$(cat servers.conf)
+
+    if [[ $N =~ ^[0-9]+$ ]]; then
+        echo "$(date) required servers are : $N"
+    else
+        echo "$(date)The value in server.conf file is not an integer. Please type valid integer"
+        break
+    fi
+    BASE_NAME="node"
+    active_servers=$(openstack server list --status ACTIVE | grep 'node[0-9]')
+    active_nodes=$(echo "$active_servers" | wc -l)
+    echo "$(date) we have $active_nodes servers"
+    if [ $active_nodes -lt $N ]; then
+    # Define the base name for the nodes
+        servers_to_add=$((N-active_nodes))
+        echo "$(date) Servers to be added: $servers_to_add"
+        if [ -f "$hostsfile" ]; then
+            rm "$hostsfile"
+        fi
+
+        echo "$(date) Remove sshconfig file if it exists"
+        if [ -f "$sshconfig" ]; then
+            rm "$sshconfig"
+        fi
+        echo "$(date) Remove hosts file if it exists"
+        echo "$(date) updating ssh config file"
+        echo " " >> $sshconfig
+        echo "Host $Bastion" >> $sshconfig
+        echo "   User ubuntu" >> $sshconfig
+        echo "   HostName $bastionfip" >> $sshconfig
+        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   UserKnownHostsFile /dev/null" >> $sshconfig
+        echo "   StrictHostKeyChecking no" >> $sshconfig
+        echo "   PasswordAuthentication no" >> $sshconfig
+
+        echo " " >> $sshconfig
+        echo "Host $HAproxy1" >> $sshconfig
+        echo "   User ubuntu" >> $sshconfig
+        echo "   HostName $haproxyfixed" >> $sshconfig
+        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   StrictHostKeyChecking no" >> $sshconfig
+        echo "   PasswordAuthentication no ">> $sshconfig
+        echo "   ProxyJump $Bastion" >> $sshconfig
+
+        echo " " >> $sshconfig
+        echo "Host $HAproxy2" >> $sshconfig
+        echo "   User ubuntu" >> $sshconfig
+        echo "   HostName $haproxyfixed2" >> $sshconfig
+        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   StrictHostKeyChecking no" >> $sshconfig
+        echo "   PasswordAuthentication no ">> $sshconfig
+        echo "   ProxyJump $Bastion" >> $sshconfig
+        echo "$(date) updating hosts file"
+        echo "[bastion]" >> $hostsfile
+        echo "$Bastion" >> $hostsfile
+        echo " " >> $hostsfile
+        echo "[HAproxy]" >> $hostsfile
+        echo "$HAproxy1" >> $hostsfile
+        echo "$HAproxy2" >> $hostsfile
+
+        echo " " >> $hostsfile
+        echo "[HAproxy1]" >> $hostsfile
+        echo "$HAproxy1" >> $hostsfile
+        echo " " >> $hostsfile
+        echo "[HAproxy2]" >> $hostsfile
+        echo "$HAproxy2" >> $hostsfile
+        echo " " >> $hostsfile
+        echo "[webservers]" >> $hostsfile
+        active_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP 'node([1-9]+)_'"${tag}")
+        for server in $active_servers; do
+            ip_address=$(openstack server list --name $server -c Networks -f value | grep -Po  '\d+\.\d+\.\d+\.\d+')
+            echo " " >> $sshconfig
+            echo "Host $server" >> $sshconfig
+            echo "   User ubuntu" >> $sshconfig
+            echo "   HostName $ip_address" >> $sshconfig
+            echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+            echo "   UserKnownHostsFile=/dev/null" >> $sshconfig
+            echo "   StrictHostKeyChecking no" >> $sshconfig
+            echo "   PasswordAuthentication no" >> $sshconfig
+            echo "   ProxyJump $Bastion" >> $sshconfig
+
+            echo "$server" >> $hostsfile
+            done   
+        for ((count = 1; count <= servers_to_add; count++)); do
+            echo "adding nodes that are required.."
+            node_name="node$((active_nodes + count))_$tag"
+
+                
+            echo "Adding node: $node_name"
+                
+            openstack server create --image "Ubuntu 20.04 Focal Fossa 20200423" --flavor "1C-2GB-50GB" --security-group "$secgrp" --key-name "$keypair"  --network "$network" "$node_name" 
+                
+            active=false
+            while [ "$active" = false ]; do
+            server_status=$(openstack server show "$node_name" -f value -c status)
+                if [ "$server_status" == "ACTIVE" ]; then
+                    active=true
+                fi
+            done
+            ip_address=$(openstack server list --name $node_name -c Networks -f value | grep -Po  '\d+\.\d+\.\d+\.\d+')
+            echo " " >> $sshconfig
+            echo "Host $node_name" >> $sshconfig
+            echo "   User ubuntu" >> $sshconfig
+            echo "   HostName $ip_address" >> $sshconfig
+            echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+            echo "   UserKnownHostsFile=/dev/null" >> $sshconfig
+            echo "   StrictHostKeyChecking no" >> $sshconfig
+            echo "   PasswordAuthentication no" >> $sshconfig
+            echo "   ProxyJump $Bastion" >> $sshconfig
+
+            echo "$node_name" >> $hostsfile
+            #path=$pwd
+            #cd ~/.ssh
+            #touch config
+            #cd path
+            #cp -r $sshconfig "~/.ssh/config"
+            
+        done
+        echo " " >> $hostsfile
+        echo "[all:vars]" >> $hostsfile
+        echo "ansible_user=ubuntu" >> $hostsfile
+        echo "ansible_ssh_private_key_file=~/.ssh/id_rsa" >> $hostsfile
+        echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
+    echo "$(date) Running ansible playbook"
+    ansible-playbook -i "$hostsfile" site.yml
+    elif [ $active_nodes -gt $N ]; then
+        servers_to_delete=$((active_nodes-N))
+        echo "Servers to be deleted: $servers_to_delete"
+        if [ -f "$hostsfile" ]; then
+            rm "$hostsfile"
+        fi
+
+        echo "Remove sshconfig file if it exists"
+        if [ -f "$sshconfig" ]; then
+            rm "$sshconfig"
+        fi
+
+        echo "Remove hosts file if it exists"
+        echo "updating ssh config file"
+        echo " " >> $sshconfig
+        echo "Host $Bastion" >> $sshconfig
+        echo "   User ubuntu" >> $sshconfig
+        echo "   HostName $bastionfip" >> $sshconfig
+        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   UserKnownHostsFile /dev/null" >> $sshconfig
+        echo "   StrictHostKeyChecking no" >> $sshconfig
+        echo "   PasswordAuthentication no" >> $sshconfig
+
+        echo " " >> $sshconfig
+        echo "Host $HAproxy1" >> $sshconfig
+        echo "   User ubuntu" >> $sshconfig
+        echo "   HostName $haproxyfixed" >> $sshconfig
+        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   StrictHostKeyChecking no" >> $sshconfig
+        echo "   PasswordAuthentication no ">> $sshconfig
+        echo "   ProxyJump $Bastion" >> $sshconfig
+
+        echo " " >> $sshconfig
+        echo "Host $HAproxy2" >> $sshconfig
+        echo "   User ubuntu" >> $sshconfig
+        echo "   HostName $haproxyfixed2" >> $sshconfig
+        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   StrictHostKeyChecking no" >> $sshconfig
+        echo "   PasswordAuthentication no ">> $sshconfig
+        echo "   ProxyJump $Bastion" >> $sshconfig
+        echo "generate hosts file"
+        echo "[bastion]" >> $hostsfile
+        echo "$Bastion" >> $hostsfile
+        echo " " >> $hostsfile
+        echo "[HAproxy]" >> $hostsfile
+        echo "$HAproxy1" >> $hostsfile
+        echo "$HAproxy2" >> $hostsfile
+
+        echo " " >> $hostsfile
+        echo "[HAproxy1]" >> $hostsfile
+        echo "$HAproxy1" >> $hostsfile
+        echo " " >> $hostsfile
+        echo "[HAproxy2]" >> $hostsfile
+        echo "$HAproxy2" >> $hostsfile
+        echo " " >> $hostsfile
+        echo "[webservers]" >> $hostsfile
+        for ((count = 0; count < servers_to_delete; count++)); do
+            node_name="node$((active_nodes-count))_$tag"
+
+            # Replace the echo command with the actual command to add a node
+            echo "$(date) deleting node: $node_name"
+            # Example command: openstack server create ...
+            openstack server delete "$node_name" 2>/dev/null
+            # Add any additional commands or operations related to adding nodes
+
+            check_servers_deleted() {
+                #openstack server list -c Status -f value | grep -qv "ACTIVE\|ERROR\|DELETING"
+                output=$(openstack server list --name $node_name)
+                if [[ -z "$output" ]]; then
+                    return 0  # Server is deleted
+                else
+                    return 1  # Server still exists
+                fi
+            }
+
+            while ! check_servers_deleted; do
+                echo "$(date) Waiting for servers to be deleted..."
+                sleep 5 
+            done
+        done
+        active_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP 'node([1-9]+)_'"${tag}")
+        for server in $active_servers; do
+            ip_address=$(openstack server list --name $server -c Networks -f value | grep -Po  '\d+\.\d+\.\d+\.\d+')
+            echo " " >> $sshconfig
+            echo "Host $server" >> $sshconfig
+            echo "   User ubuntu" >> $sshconfig
+            echo "   HostName $ip_address" >> $sshconfig
+            echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+            echo "   UserKnownHostsFile=/dev/null" >> $sshconfig
+            echo "   StrictHostKeyChecking no" >> $sshconfig
+            echo "   PasswordAuthentication no" >> $sshconfig
+            echo "   ProxyJump $Bastion" >> $sshconfig
+            echo "$server" >> $hostsfile
+        done
+        echo " " >> $hostsfile
+        echo "[all:vars]" >> $hostsfile
+        echo "ansible_user=ubuntu" >> $hostsfile
+        echo "ansible_ssh_private_key_file=~/.ssh/id_rsa" >> $hostsfile
+        echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
+
+    echo "$(date) Running ansible playbook"
+    ansible-playbook -i "$hostsfile" site.yml
+    else
+        echo "$(date) no servers to add or delete"
+        echo "$(date) active servers = required servers"
+
+    fi
+    echo "$(date) checking again in 30 seconds.."
+    echo "sleeping 30 seconds"
+    sleep 30  
+    echo "$(date) reinitiating operate code.."
+done 
