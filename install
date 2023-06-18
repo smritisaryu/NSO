@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 openrc=$1
 tag=$2
