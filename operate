@@ -109,13 +109,16 @@ while true; do
                 
             echo "Adding node: $node_name"
                 
-            openstack server create --image "Ubuntu 20.04 Focal Fossa 20200423" --flavor "1C-2GB-50GB" --security-group "$secgrp" --key-name "$keypair"  --network "$network" "$node_name" 
+            create=$(openstack server create --image "Ubuntu 20.04 Focal Fossa 20200423" --flavor "1C-2GB-50GB" --security-group "$secgrp" --key-name "$keypair"  --network "$network" "$node_name") 
                 
             active=false
             while [ "$active" = false ]; do
             server_status=$(openstack server show "$node_name" -f value -c status)
                 if [ "$server_status" == "ACTIVE" ]; then
                     active=true
+		            sleep 10
+                    echo "$(date) waiting for server to become active.. "
+                    sleep 10
                 fi
             done
             ip_address=$(openstack server list --name $node_name -c Networks -f value | grep -Po  '\d+\.\d+\.\d+\.\d+')
@@ -143,6 +146,7 @@ while true; do
         echo "ansible_ssh_private_key_file=~/.ssh/id_rsa" >> $hostsfile
         echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
     echo "$(date) Running ansible playbook"
+    sleep 10
     ansible-playbook -i "$hostsfile" site.yml
     elif [ $active_nodes -gt $N ]; then
         servers_to_delete=$((active_nodes-N))
@@ -206,7 +210,7 @@ while true; do
             # Replace the echo command with the actual command to add a node
             echo "$(date) deleting node: $node_name"
             # Example command: openstack server create ...
-            openstack server delete "$node_name" 2>/dev/null
+            delete=$(openstack server delete "$node_name" 2>/dev/null)
             # Add any additional commands or operations related to adding nodes
 
             check_servers_deleted() {
@@ -243,8 +247,9 @@ while true; do
         echo "ansible_user=ubuntu" >> $hostsfile
         echo "ansible_ssh_private_key_file=~/.ssh/id_rsa" >> $hostsfile
         echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
-
+    sleep 5
     echo "$(date) Running ansible playbook"
+    sleep 5
     ansible-playbook -i "$hostsfile" site.yml
     else
         echo "$(date) no servers to add or delete"
