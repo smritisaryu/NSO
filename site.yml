@@ -71,7 +71,7 @@
   become: yes
   roles:
     - prometheus
-    - grafana
+    #- grafana
 #- name: install monitoring stack
  # hosts: bastion
   #become: yes
