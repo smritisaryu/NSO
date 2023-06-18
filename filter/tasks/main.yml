@@ -1,8 +1,0 @@
----
-- name: sudo sysctl -w net.ipv4.ip_nonlocal_bind=1
-  become: yes
-  shell: sysctl -w net.ipv4.ip_nonlocal_bind=1
-
-- name: gather server ip addresses
-  setup:
-      filter: ansible_default_ipv4.address
