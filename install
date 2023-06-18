@@ -270,7 +270,9 @@ echo "$HAproxy2" >> $hostsfile
 
 echo " " >> $hostsfile
 echo "[webservers]" >> $hostsfile
-
+sleep 10
+echo "$(date) waiting for active node servers..."
+sleep 10
 # Get the list of active servers
 active_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP 'node([1-9]+)_'"${tag}")
 #   echo "$active_servers"
