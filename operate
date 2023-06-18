@@ -107,10 +107,10 @@ while true; do
             node_name="node$((active_nodes + count))_$tag"
 
                 
-            echo "Adding node: $node_name"
+            echo "$(date) Adding node: $node_name"
                 
             create=$(openstack server create --image "Ubuntu 20.04 Focal Fossa 20200423" --flavor "1C-2GB-50GB" --security-group "$secgrp" --key-name "$keypair"  --network "$network" "$node_name") 
-                
+            echo "$(date) created server.."
             active=false
             while [ "$active" = false ]; do
             server_status=$(openstack server show "$node_name" -f value -c status)
