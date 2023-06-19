@@ -5,3 +5,6 @@
 
 servers.conf file has an integer value that is read by the operate solution for every 30 secs. The servers scale up or down based on the requested value in servers.conf file.
 site.yml ----- an ansible-playbook that focusses here on the configuration of specific hosts. 
+We have used Light weighted software 'Prometheus' as the primary monitoring solution (listens on port:9090)
+Snmp walk on port:6000 
+service.py on port:5000
