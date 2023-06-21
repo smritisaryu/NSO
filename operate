@@ -24,11 +24,11 @@ while true; do
     if [[ $N =~ ^[0-9]+$ ]]; then
         echo "$(date) required servers are : $N"
     else
-        echo "$(date)The value in server.conf file is not an integer. Please type valid integer"
+        echo "$(date)The value in servers.conf file is not an integer. Please type valid integer"
         break
     fi
     BASE_NAME="node"
-    active_servers=$(openstack server list --status ACTIVE | grep 'node[0-9]')
+    active_servers=$(openstack server list | grep 'node[0-9]')
     active_nodes=$(echo "$active_servers" | wc -l)
     echo "$(date) we have $active_nodes servers"
     if [ $active_nodes -lt $N ]; then
@@ -49,7 +49,7 @@ while true; do
         echo "Host $Bastion" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
         echo "   HostName $bastionfip" >> $sshconfig
-        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   IdentityFile id_rsa" >> $sshconfig
         echo "   UserKnownHostsFile /dev/null" >> $sshconfig
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no" >> $sshconfig
@@ -58,7 +58,7 @@ while true; do
         echo "Host $HAproxy1" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
         echo "   HostName $haproxyfixed" >> $sshconfig
-        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   IdentityFile id_rsa" >> $sshconfig
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no ">> $sshconfig
         echo "   ProxyJump $Bastion" >> $sshconfig
@@ -67,7 +67,7 @@ while true; do
         echo "Host $HAproxy2" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
         echo "   HostName $haproxyfixed2" >> $sshconfig
-        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   IdentityFile id_rsa" >> $sshconfig
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no ">> $sshconfig
         echo "   ProxyJump $Bastion" >> $sshconfig
@@ -87,14 +87,14 @@ while true; do
         echo "$HAproxy2" >> $hostsfile
         echo " " >> $hostsfile
         echo "[webservers]" >> $hostsfile
-        active_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP 'node([1-9]+)_'"${tag}")
-        for server in $active_servers; do
+        actve_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP 'node([1-9]+)_'"${tag}")
+        for server in $actve_servers; do
             ip_address=$(openstack server list --name $server -c Networks -f value | grep -Po  '\d+\.\d+\.\d+\.\d+')
             echo " " >> $sshconfig
             echo "Host $server" >> $sshconfig
             echo "   User ubuntu" >> $sshconfig
             echo "   HostName $ip_address" >> $sshconfig
-            echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+            echo "   IdentityFile id_rsa" >> $sshconfig
             echo "   UserKnownHostsFile=/dev/null" >> $sshconfig
             echo "   StrictHostKeyChecking no" >> $sshconfig
             echo "   PasswordAuthentication no" >> $sshconfig
@@ -126,7 +126,7 @@ while true; do
             echo "Host $node_name" >> $sshconfig
             echo "   User ubuntu" >> $sshconfig
             echo "   HostName $ip_address" >> $sshconfig
-            echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+            echo "   IdentityFile id_rsa" >> $sshconfig
             echo "   UserKnownHostsFile=/dev/null" >> $sshconfig
             echo "   StrictHostKeyChecking no" >> $sshconfig
             echo "   PasswordAuthentication no" >> $sshconfig
@@ -143,7 +143,7 @@ while true; do
         echo " " >> $hostsfile
         echo "[all:vars]" >> $hostsfile
         echo "ansible_user=ubuntu" >> $hostsfile
-        echo "ansible_ssh_private_key_file=~/.ssh/id_rsa" >> $hostsfile
+        echo "ansible_ssh_private_key_file=id_rsa" >> $hostsfile
         echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
     echo "$(date) Running ansible playbook"
     sleep 10
@@ -166,7 +166,7 @@ while true; do
         echo "Host $Bastion" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
         echo "   HostName $bastionfip" >> $sshconfig
-        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   IdentityFile id_rsa" >> $sshconfig
         echo "   UserKnownHostsFile /dev/null" >> $sshconfig
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no" >> $sshconfig
@@ -175,7 +175,7 @@ while true; do
         echo "Host $HAproxy1" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
         echo "   HostName $haproxyfixed" >> $sshconfig
-        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   IdentityFile id_rsa" >> $sshconfig
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no ">> $sshconfig
         echo "   ProxyJump $Bastion" >> $sshconfig
@@ -184,7 +184,7 @@ while true; do
         echo "Host $HAproxy2" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
         echo "   HostName $haproxyfixed2" >> $sshconfig
-        echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+        echo "   IdentityFile id_rsa" >> $sshconfig
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no ">> $sshconfig
         echo "   ProxyJump $Bastion" >> $sshconfig
@@ -235,7 +235,7 @@ while true; do
             echo "Host $server" >> $sshconfig
             echo "   User ubuntu" >> $sshconfig
             echo "   HostName $ip_address" >> $sshconfig
-            echo "   IdentityFile ~/.ssh/id_rsa" >> $sshconfig
+            echo "   IdentityFile id_rsa" >> $sshconfig
             echo "   UserKnownHostsFile=/dev/null" >> $sshconfig
             echo "   StrictHostKeyChecking no" >> $sshconfig
             echo "   PasswordAuthentication no" >> $sshconfig
@@ -245,7 +245,7 @@ while true; do
         echo " " >> $hostsfile
         echo "[all:vars]" >> $hostsfile
         echo "ansible_user=ubuntu" >> $hostsfile
-        echo "ansible_ssh_private_key_file=~/.ssh/id_rsa" >> $hostsfile
+        echo "ansible_ssh_private_key_file=id_rsa" >> $hostsfile
         echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
     sleep 5
     echo "$(date) Running ansible playbook"
