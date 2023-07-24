@@ -153,7 +153,7 @@ echo "$(date) creating nodes"
 N=3
 
 # Define the base name for the nodes
-BASE_NAME="node"
+BASE_NAME="dev"
 
 # Loop through the number of nodes
 for ((i=1; i<=N; i++)); do
