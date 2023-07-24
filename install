@@ -157,16 +157,16 @@ BASE_NAME="dev"
 
 # Loop through the number of nodes
 for ((i=1; i<=N; i++)); do
-    # Define the node name and tag
+    # Define the dev name and tag
     NODE_NAME="${tag}_${BASE_NAME}${i}"
     NODE_TAG="${tag}"
 
-    # Check if the node already exists
+    # Check if the dev already exists
     if openstack server show "$NODE_NAME" >/dev/null 2>&1; then
         echo "$(date) Node $NODE_NAME already exists."
     else
         echo "$(date) Creating node $NODE_NAME with tag $NODE_TAG..."
-        # Add your command to create the node here
+        # Add your command to create the dev here
         nodes_create=$(openstack server create --image "Ubuntu 20.04 Focal Fossa x86_64" --flavor "1C-2GB-50GB" --key-name "$keypair" --security-group "$secgrp" --network "$network" "$NODE_NAME" 2>/dev/null)
     fi
 done
@@ -195,12 +195,12 @@ floating_ip3=$(openstack floating ip create ext-net -f value -c floating_ip_addr
 #openstack server add floating ip "$HAproxy1" "$floating_ip1"
 #openstack server add floating ip "$HAproxy2" "$floating_ip2"
 openstack server add floating ip "$Bastion" "$floating_ip3" 2>/dev/null
-
-echo "$(date) Floating IPs assigned successfully: $floating_ip3 to $Bastion"
+bastionfip=$(openstack server list --name $Bastion -c Networks -f value | grep -Po '\d+\.\d+\.\d+\.\d+' | awk 'NR==2' 2>/dev/null)
+echo "$(date) Floating IPs assigned successfully: $bastionfip to $Bastion"
 
 #################################################################################################################################
 echo "$(date) Creating port"
-vip_port="${tag}_vip"
+vip_port="$tag_vip"
 vip=$(openstack port create --network "$network" --fixed-ip subnet="$subnet" --no-security-group "$vip_port" 2>/dev/null)
 floatip4=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
 echo "Attatching floating ip to vip port"
@@ -278,10 +278,10 @@ echo "$HAproxy2" >> $hostsfile
 echo " " >> $hostsfile
 echo "[webservers]" >> $hostsfile
 sleep 10
-echo "$(date) waiting for active node servers..."
+echo "$(date) waiting for active dev servers..."
 sleep 10
 # Get the list of active servers
-active_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP "${tag}"_'node([1-9]+)')
+active_servers=$(openstack server list --status ACTIVE -f value -c Name | grep -oP "${tag}"_'dev([1-9]+)')
 #   echo "$active_servers"
 # Loop through each active server and extract its IP address
 for server in $active_servers; do
@@ -320,6 +320,11 @@ echo "SSH config file and hosts file generated"
 #sudo wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-amd64.tar.gz
 #sudo tar -xvf node_exporter-1.3.1.linux-amd64.tar.gz
 #cd $original_dir
+if [ -f "dev_count.txt" ]; then
+    rm "dev_count.txt"
+fi
+nodes="${tag}_dev"
+no_of_nodes=$(openstack server list | grep "$nodes" | wc -l > dev_count.txt)
 sleep 5
 echo "$(date) Initiating ansible playbook.."
 sleep 5
