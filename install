@@ -203,7 +203,7 @@ echo "$(date) Creating port"
 vip_port="${tag}_vip"
 vip=$(openstack port create --network "$network" --fixed-ip subnet="$subnet" --no-security-group "$vip_port" 2>/dev/null)
 floatip4=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
-echo "Attatching floating ip to vip port"
+echo "$(date) Attatching floating ip to vip port"
 add_vip_fip=$(openstack floating ip set --port "$vip_port" $floatip4 2>/dev/null)
 
 if [ -f "vip" ]; then
@@ -221,7 +221,7 @@ bastionfip=$(openstack server list --name $Bastion -c Networks -f value | grep -
 haproxyfixed=$(openstack server show $HAproxy1 -c addresses | grep -Po '\d+\.\d+\.\d+\.\d+' | awk 'NR==1' 2>/dev/null)
 haproxyfixed2=$(openstack server list --name $HAproxy2 -c Networks -f value | grep -Po '\d+\.\d+\.\d+\.\d+' | awk 'NR==1' 2>/dev/null)
 
-echo "updating ports of haproxy servers"
+echo "$(date) updating ports of haproxy servers"
 portid_ha1=$(openstack port list --fixed-ip ip-address="$haproxyfixed" -c ID -f value 2>/dev/null)
 portid_ha2=$(openstack port list --fixed-ip ip-address="$haproxyfixed2" -c ID -f value 2>/dev/null)
 
@@ -239,7 +239,7 @@ fi
 if [ -f "$sshconfig" ]; then
     rm "$sshconfig"
 fi
-echo "updating ssh config file"
+echo "$(date) updating ssh config file"
 echo " " >> $sshconfig
 echo "Host $Bastion" >> $sshconfig
 echo "   User ubuntu" >> $sshconfig
@@ -267,7 +267,7 @@ echo "   StrictHostKeyChecking no" >> $sshconfig
 echo "   PasswordAuthentication no ">> $sshconfig
 echo "   ProxyJump $Bastion" >> $sshconfig
 
-echo "generate hosts file"
+echo "$(date) generate hosts file"
 echo "[bastion]" >> $hostsfile
 echo "$Bastion" >> $hostsfile
 echo " " >> $hostsfile
@@ -311,7 +311,7 @@ echo "[all:vars]" >> $hostsfile
 echo "ansible_user=ubuntu" >> $hostsfile
 echo "ansible_ssh_private_key_file=$privkey" >> $hostsfile
 echo "ansible_ssh_common_args=' -F $sshconfig '" >> $hostsfile
-echo "SSH config file and hosts file generated"
+echo "$(date) SSH config file and hosts file generated"
 #cp -r config "~/.ssh/config"
 #original_dir=$(pwd)
 #cd /opt
