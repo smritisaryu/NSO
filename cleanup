@@ -2,7 +2,7 @@
 
 openrc="$1"
 tag="$2"
-network_name="network_$tag"
+network_name="${tag}_network"
 sshconfig="config"
 hostsfile="hosts"
 
@@ -28,8 +28,8 @@ done
 
 
 # router check
-router_name="router_$tag"
-subnet_name="subnet_$tag"
+router_name="${tag}_router"
+subnet_name="${tag}_subnet"
 #subnet_id=$(openstack subnet list --name "$subnet_name" -f value -c ID 2>/dev/null)
 echo "$(date) Checking if subnets exists..."
 subnets=$(openstack subnet list --name "$subnet_name" -f value -c ID 2>/dev/null)
@@ -39,7 +39,7 @@ else
     echo "$(date) No subnets found"
 fi
 
-subnet_id=$(openstack subnet list --name "subnet_$tag" -c ID -f value)
+subnet_id=$(openstack subnet list --name "$tag_subnet" -c ID -f value)
 echo "$(date) Checking if subnet is added to the router..."
 if [ -n "$subnet_id" ]; then
   for sub in $subnet_id; do
@@ -75,7 +75,7 @@ else
     echo "$(date) No subnets found"
 fi
 
-routers=$(openstack router list --column "Name" --format "value" | grep "router_$tag")
+routers=$(openstack router list --column "Name" --format "value" | grep "$tag_router")
 echo "$(date) Checking for Routers..."
 count=$(echo "$routers" | wc -l)  # Count the number of routers
 
@@ -117,7 +117,7 @@ fi
 
 
 # List key pairs with the specified tag
-keypairs=$(openstack keypair list -f value -c Name | grep "keypair_$tag")
+keypairs=$(openstack keypair list -f value -c Name | grep "$tag_keypair")
 echo "$(date) Checking for keypairs..."
 count=$(echo "$keypairs" | wc -l)  # Count the number of key pairs
 
