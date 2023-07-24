@@ -200,7 +200,7 @@ echo "$(date) Floating IPs assigned successfully: $bastionfip to $Bastion"
 
 #################################################################################################################################
 echo "$(date) Creating port"
-vip_port="$tag_vip"
+vip_port="${tag}_vip"
 vip=$(openstack port create --network "$network" --fixed-ip subnet="$subnet" --no-security-group "$vip_port" 2>/dev/null)
 floatip4=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
 echo "Attatching floating ip to vip port"
