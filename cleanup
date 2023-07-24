@@ -12,7 +12,7 @@ echo "$(date) Releasing floating ips from servers..."
 floating_ips=$(openstack floating ip list -f value -c ID 2>/dev/null)
 
 if [ -n "$floating_ips" ]; then
-    echo "Deleting Floating IPs:"
+    echo "$(date) Deleting Floating IPs.."
     for ip in $floating_ips; do
         openstack floating ip delete $ip
     done
@@ -80,7 +80,7 @@ echo "$(date) Checking for Routers..."
 count=$(echo "$routers" | wc -l)  # Count the number of routers
 
 if [ "$count" -gt 0 ]; then
-    echo "$(date) Deleting Routers:..."
+    echo "$(date) Deleting Routers..."
     for router in $routers; do
         openstack router delete "$router"
     done
@@ -106,7 +106,7 @@ echo "$(date) Checking for Security Groups..."
 count=$(echo "$security_groups" | wc -l)  # Count the number of security groups
 
 if [ "$count" -gt 0 ]; then
-    echo "$(date) Deleting Security Groups:..."
+    echo "$(date) Deleting Security Groups..."
     for security_group in $security_groups; do
         openstack security group delete "$security_group"
     done
