@@ -1,3 +1,9 @@
+Minimumm requirements: 
+1) Openstack version: 5.8 or above
+2) Python version: 3.10
+3) Ansible version: 2.10.8 or above
+4) ssh key is suggested to be generated in the current directory.
+
 # Network Automation in Openstack has three phases, and are invoked as follows:
 1) install - install <openrc> <tag> <ssh_key>
 2) operate - operate <openrc> <tag> <ssh_key>
