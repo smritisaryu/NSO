@@ -144,5 +144,9 @@ echo "$(date) Deleting vipaddr"
 if [[ -f "vip" ]] ; then
   rm "vip"
 fi
+echo "$(date) cleaning up in process.."
+if [[ -f "dev_count.txt" ]] ; then
+  rm "dev_count.txt"
+fi
 
 echo "$(date) CLEANUP COMPLETED"
