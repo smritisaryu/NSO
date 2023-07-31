@@ -8,6 +8,13 @@ hostsfile="hosts"
 
 source "$openrc"
 echo "$(date) initiating cleanup.."
+echo "$(date) cleaning up allocated resources with tag $2"
+echo "$(date) Checking if servers exists..."
+for server_name in $(openstack server list --name "$tag" -f value -c Name 2>/dev/null); do
+    echo "$(date) Deleting server: $server_name"
+    openstack server delete "$server_name"
+done
+
 echo "$(date) Releasing floating ips from servers..."
 floating_ips=$(openstack floating ip list -f value -c ID 2>/dev/null)
 
@@ -19,13 +26,6 @@ if [ -n "$floating_ips" ]; then
 else
     echo "$(date) No floating IPs exist"
 fi
-
-echo "$(date) Checking if servers exists..."
-for server_name in $(openstack server list --name "$tag" -f value -c Name 2>/dev/null); do
-    echo "$(date) Deleting server: $server_name"
-    openstack server delete "$server_name"
-done
-
 
 # router check
 router_name="${tag}_router"
@@ -39,7 +39,7 @@ else
     echo "$(date) No subnets found"
 fi
 
-subnet_id=$(openstack subnet list --name "$tag_subnet" -c ID -f value)
+subnet_id=$(openstack subnet list --name "$subnet_name" -c ID -f value)
 echo "$(date) Checking if subnet is added to the router..."
 if [ -n "$subnet_id" ]; then
   for sub in $subnet_id; do
@@ -51,16 +51,27 @@ else
   echo "$(date) No subnet $subnet_name to remove"
 fi
 
-ports=$(openstack port list  -f value -c ID 2>/dev/null)
-echo "$(date) Checking if port exists..."
-if [ -n "$ports" ]; then
-    echo "$(date) Deleting ports:..."
-    for port_id in $ports; do
-        echo "$(date) Deleting port: $port_id"
-        openstack port delete "$port_id"
+routers=$(openstack router list --column "Name" --format "value" | grep "$router_name")
+echo "$(date) Checking for Routers..."
+count=$(echo "$routers" | wc -l)  # Count the number of routers
+
+if [ "$count" -gt 0 ]; then
+    echo "$(date) Deleting Routers..."
+    for router in $routers; do
+        openstack router delete "$router"
+        echo "$(date) deleted "$router""
     done
 else
-    echo "$(date) No ports found"
+    echo "$(date) No routers exist with the specified tag"
+fi
+echo "$(date) deleting virtual port.."
+vip_port="${tag}_vip"
+if openstack port show "$vip_port" >/dev/null 2>&1; then
+    # Port exists, so delete it
+    openstack port delete "$vip_port"
+    echo "$(date) Virtual Port '$vip_port' deleted successfully."
+else
+    echo "$(date) No Virtual Port exist with '$vip_port'"
 fi
 
 subnets=$(openstack subnet list --name "$subnet_name" -f value -c ID 2>/dev/null)
@@ -73,19 +84,6 @@ if [ -n "$subnets" ]; then
     done
 else
     echo "$(date) No subnets found"
-fi
-
-routers=$(openstack router list --column "Name" --format "value" | grep "$tag_router")
-echo "$(date) Checking for Routers..."
-count=$(echo "$routers" | wc -l)  # Count the number of routers
-
-if [ "$count" -gt 0 ]; then
-    echo "$(date) Deleting Routers..."
-    for router in $routers; do
-        openstack router delete "$router"
-    done
-else
-    echo "$(date) No routers exist with the specified tag"
 fi
 
 
@@ -113,7 +111,6 @@ if [ "$count" -gt 0 ]; then
 else
     echo "$(date) No security groups exist with the specified tag"
 fi
-
 
 
 # List key pairs with the specified tag
