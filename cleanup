@@ -16,16 +16,39 @@ for server_name in $(openstack server list --name "$tag" -f value -c Name 2>/dev
 done
 
 echo "$(date) Releasing floating ips from servers..."
-floating_ips=$(openstack floating ip list -f value -c ID 2>/dev/null)
 
-if [ -n "$floating_ips" ]; then
-    echo "$(date) Deleting Floating IPs.."
-    for ip in $floating_ips; do
-        openstack floating ip delete $ip
-    done
-else
-    echo "$(date) No floating IPs exist"
+# Read the content of the files into variables
+if [[ -f "f1" ]]; then
+   floating_ip1=$(cat f1)
+   echo "$(date) Deleting Floating IP: $floating_ip1"
+   openstack floating ip delete "$floating_ip1"
 fi
+
+if [[ -f "f2" ]]; then
+   floating_ip2=$(cat f2)
+   echo "$(date) Deleting Floating IP: $floating_ip2"
+   openstack floating ip delete "$floating_ip2"
+fi
+
+# Store the IPs in an array
+#floating_ips=("$floating_ip1" "$floating_ip2")
+
+#if [ ${#floating_ips[@]} -gt 0 ]; then
+ #   echo "$(date) Deleting Floating IPs.."
+  #  for ip in "${floating_ips[@]}"; do
+   #     if openstack floating ip show "$ip" &>/dev/null; then
+            #echo "$(date) Checking and Deleting Floating IPs"
+    #        openstack floating ip delete "$ip"
+     #   else
+      #      echo "Floating IP $ip not found. Skipping deletion."
+       # fi
+   # done
+   # echo "$(date) Floating IPs deleted"
+#else
+ #   echo "No Floating IPs to delete."
+#fi
+
+
 
 # router check
 router_name="${tag}_router"
@@ -131,12 +154,22 @@ echo "$(date) Deleting ssh config file"
 if [[ -f "$sshconfig" ]] ; then
     rm "$sshconfig"
 fi
-
 echo "$(date) Deleting hosts file"
 if [[ -f "$hostsfile" ]] ; then
     rm "$hostsfile"
 fi
+echo "$(date) Deleting auxiliary files created"
+if [[ -f "f1" ]] ; then
+    rm "f1"
+fi
+if [[ -f "f2" ]] ; then
+    rm "f2"
+fi
 
+
+if [[ -f "unassigned" ]] ; then
+    rm "unassigned"
+fi
 echo "$(date) Deleting vipaddr"
 if [[ -f "vip" ]] ; then
   rm "vip"
