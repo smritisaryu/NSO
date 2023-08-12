@@ -43,6 +43,15 @@ while true; do
         nodes="${tag}_dev"
         openstack server list | grep "$nodes" | wc -l > dev_count.txt
 
+        find_available_dev_number() {
+        existing_dev_numbers=($(openstack server list --name "${tag}_dev*" -c Name -f value | grep -oP "${tag}_dev\K\d+"))
+        for ((i = 1; i <= 9999; i++)); do
+                if ! [[ "${existing_dev_numbers[@]}" =~ "$i" ]]; then
+                echo "$i"
+                return
+                fi
+        done
+        }
         if [ -f "$hostsfile" ]; then
             rm "$hostsfile"
         fi
@@ -112,9 +121,11 @@ while true; do
             done
         for ((count = 1; count <= servers_to_add; count++)); do
             echo "$(date) adding nodes that are required.."
-            a=$(("$sc"+1))
-            node_name="${tag}_dev${a}"
-
+            #a=$(("$sc"+1))
+            #node_name="${tag}_dev${a}"
+             echo "$(date) adding nodes that are required.."
+            available_dev_number=$(find_available_dev_number)
+            node_name="${tag}_dev${available_dev_number}"
             echo "$(date) Adding node: $node_name"
 
             create=$(openstack server create --image "Ubuntu 20.04 Focal Fossa x86_64" --flavor "1C-2GB-50GB" --security-group "$secgrp" --key-name "$keypair"  --network "$network" "$node_name")
@@ -151,7 +162,7 @@ while true; do
             fi
             nodes="${tag}_dev"
             openstack server list | grep "$nodes" | wc -l > dev_count.txt
-            sc=$(("$sc"+1))
+           # sc=$(("$sc"+1))
         done
         echo " " >> $hostsfile
         echo "[all:vars]" >> $hostsfile
@@ -163,18 +174,18 @@ while true; do
     ansible-playbook -i "$hostsfile" site.yml
     elif [ $active_nodes -gt $N ]; then
         servers_to_delete=$((active_nodes-N))
-        echo "Servers to be deleted: $servers_to_delete"
+        echo "$(date) Servers to be deleted: $servers_to_delete"
         if [ -f "$hostsfile" ]; then
             rm "$hostsfile"
         fi
 
-        echo "Remove sshconfig file if it exists"
+        echo "$(date) Remove sshconfig file if it exists"
         if [ -f "$sshconfig" ]; then
             rm "$sshconfig"
         fi
 
-        echo "Remove hosts file if it exists"
-        echo "updating ssh config file"
+        echo "$(date) Removing host file if it exists"
+        echo "$(date) updating ssh config file"
         echo " " >> $sshconfig
         echo "Host $Bastion" >> $sshconfig
         echo "   User ubuntu" >> $sshconfig
@@ -201,7 +212,7 @@ while true; do
         echo "   StrictHostKeyChecking no" >> $sshconfig
         echo "   PasswordAuthentication no ">> $sshconfig
         echo "   ProxyJump $Bastion" >> $sshconfig
-        echo "generate hosts file"
+        echo "$(date) generate hosts file"
         echo "[bastion]" >> $hostsfile
         echo "$Bastion" >> $hostsfile
         echo " " >> $hostsfile
