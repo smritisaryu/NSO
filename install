@@ -53,10 +53,10 @@ if [ -n "$router_id" ]; then
     echo "$(date) Router exists with ID: $router_id"
 else
     echo "$(date) Router does not exist"
-    #create_router=$(openstack router create --tag "$tag" "$router" )
-    router_create=$(openstack router create --external-gateway ext-net "$router" 2>/dev/null)
+    create_router=$(openstack router create --tag "$tag" "$router" )
+    #router_create=$(openstack router create --external-gateway ext-net "$router" 2>/dev/null)
     echo "$(date) $router created"
-    #setway=$(openstack router set --external-gateway ext-net "$router")
+    setway=$(openstack router set --external-gateway ext-net "$router")
 
     #router_create=$(openstack router create --external-gateway ext-net "$router" 2>/dev/null)
     echo "$(date) external gateway set to the router"
@@ -173,11 +173,40 @@ done
 
 ##############################################################
 echo "$(date) checking for unassigned floating ips"
-floating_unassigned=$(openstack floating ip list --status ACTIVE --port "" -f value -c "ID")
-for floating_ip in $floating_unassigned; do
-    delete=$(openstack floating ip delete "$floating_ip" 2>/dev/null)
-done
-
+floating_unassigned=$(openstack floating ip list -c 'Floating IP Address' -f value)
+openstack floating ip list -c 'Floating IP Address' -f value > unassigned
+line_count=$(wc -l < unassigned)
+if (( "$line_count" == 0 )); then
+    echo "$(date) No floating IPs are present"
+    echo "$(date) Creating 2 floating IPs"
+    f_ip3=$(openstack floating ip create ext-net -f value -c floating_ip_address > f1 2>/dev/null)
+    f_ip4=$(openstack floating ip create ext-net -f value -c floating_ip_address > f2 2>/dev/null)
+    floating_ip3=$(cat f1)
+    floatip4=$(cat f2)
+elif (( "$line_count" == 1 )); then
+    echo "$(date) Only 1 floating IP is present"
+    echo "$(date) Creating another floating IP"
+    index=1
+    while read -r ip; do
+        echo "$ip" > "f$index"
+        echo "$(date) Floating IP $index: $ip saved to f$index"
+        index=$((index + 1))
+    done <<< "$floating_unassigned"
+    f_ip4=$(openstack floating ip create ext-net -f value -c floating_ip_address > f2 2>/dev/null)
+    floating_ip3=$(cat f1)
+    floatip4=$(cat f2)
+else
+    echo "$(date) Floating IPs are available"
+    index=1
+    while read -r ip; do
+        # Save each IP address into a separate file
+        echo "$ip" > "f$index"
+        echo "$(date) Floating IP $index: $ip saved to f$index"
+        index=$((index + 1))
+    done <<< "$floating_unassigned"
+    floating_ip3=$(cat f1)
+    floatip4=$(cat f2)
+fi
 # Wait for servers to become active
 echo "$(date) Waiting for servers to become active"
 while true; do
@@ -191,7 +220,7 @@ while true; do
     sleep 10
 done
 
-floating_ip3=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
+#floating_ip3=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
 #openstack server add floating ip "$HAproxy1" "$floating_ip1"
 #openstack server add floating ip "$HAproxy2" "$floating_ip2"
 openstack server add floating ip "$Bastion" "$floating_ip3" 2>/dev/null
@@ -200,9 +229,19 @@ echo "$(date) Floating IPs assigned successfully: $bastionfip to $Bastion"
 
 #################################################################################################################################
 echo "$(date) Creating port"
+#vip_port="${tag}_vip"
+#vip=$(openstack port create --network "$network" --fixed-ip subnet="$subnet" --no-security-group "$vip_port" 2>/dev/null)
 vip_port="${tag}_vip"
-vip=$(openstack port create --network "$network" --fixed-ip subnet="$subnet" --no-security-group "$vip_port" 2>/dev/null)
-floatip4=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
+
+# Check if the port already exists
+if openstack port show "$vip_port" &>/dev/null; then
+    echo "$(date) Port $vip_port already exists."
+else
+    # If port doesn't exist, create it
+    vip=$(openstack port create --network "$network" --fixed-ip subnet="$subnet" --no-security-group "$vip_port" 2>/dev/null)
+    echo "$(date) Created port $vip_port."
+fi
+#floatip4=$(openstack floating ip create ext-net -f value -c floating_ip_address 2>/dev/null)
 echo "$(date) Attatching floating ip to vip port"
 add_vip_fip=$(openstack floating ip set --port "$vip_port" $floatip4 2>/dev/null)
 
