@@ -5,6 +5,7 @@ Minimumm requirements:
 4) ssh key is suggested to be generated in the current directory.
 5) Make sure jq is installed
 6) install snmp package for validating snmpwalk (over 6000 port)
+Note: Image - Ubuntu 20.04 is considered ideal to run the following three phases.
 
 # Network Automation in Openstack has three phases, and are invoked as follows:
 1) install - install <openrc> <tag> <ssh_key>
